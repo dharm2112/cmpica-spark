@@ -2,7 +2,7 @@ import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { motion, AnimatePresence } from "motion/react";
 import { toast } from "sonner";
-import { CheckCircle2, Clock, Info, Loader2, Send, Sparkles } from "lucide-react";
+import { AlertCircle, CheckCircle2, Clock, Info, Loader2, Send, Sparkles, XCircle } from "lucide-react";
 import { CATEGORIES } from "@/lib/mock-data";
 
 import { AuroraBackground } from "@/components/aurora-background";
@@ -56,6 +56,7 @@ function SubmitPage() {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [ticketId, setTicketId] = useState<string | null>(null);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   const timestamp = new Date();
   const nameError = touched.name && name.trim().length < 2 ? "Please enter your full name." : "";
@@ -66,15 +67,42 @@ function SubmitPage() {
   const valid = name.trim().length >= 2 && message.trim().length >= 12;
   const preview = classifyMock(message);
 
-  const submit = () => {
+  const WEBHOOK_URL = import.meta.env.VITE_WEBHOOK_URL as string;
+
+  const submit = async () => {
     setConfirmOpen(false);
     setLoading(true);
-    setTimeout(() => {
+    setSubmitError(null);
+
+    try {
+      const res = await fetch(WEBHOOK_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          "Sender Name": name.trim(),
+          "Message": message.trim(),
+          "Contact Email": contact.trim(),
+          "Source": "form",
+        }),
+      });
+
+      if (!res.ok) {
+        throw new Error(`Server responded with ${res.status}`);
+      }
+
       const id = `CMP-${1043 + Math.floor(Math.random() * 40)}`;
       setTicketId(id);
+      toast.success("Ticket submitted", {
+        description: `Reference ${id} · routed to ${preview.department}`,
+      });
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "Network error — please try again.";
+      setSubmitError(message);
+      toast.error("Submission failed", { description: message });
+    } finally {
       setLoading(false);
-      toast.success("Ticket submitted", { description: `Reference ${id} · routed to ${preview.department}` });
-    }, 1400);
+    }
   };
 
   const reset = () => {
@@ -85,6 +113,7 @@ function SubmitPage() {
     setDepartment("");
     setMessage("");
     setTouched({ name: false, message: false });
+    setSubmitError(null);
   };
 
   return (
@@ -141,7 +170,10 @@ function SubmitPage() {
                     onSubmit={(e) => {
                       e.preventDefault();
                       setTouched({ name: true, message: true });
-                      if (valid) setConfirmOpen(true);
+                      if (valid) {
+                        setSubmitError(null);
+                        setConfirmOpen(true);
+                      }
                     }}
                   >
                     <div className="space-y-2">
@@ -344,12 +376,31 @@ function SubmitPage() {
             </p>
             <p className="text-xs text-muted-foreground">{timestamp.toLocaleString()}</p>
           </div>
+          {submitError && (
+            <div className="flex items-start gap-2 rounded-xl border border-danger/40 bg-danger/10 px-4 py-3 text-sm text-danger">
+              <XCircle className="mt-0.5 h-4 w-4 shrink-0" />
+              <span>{submitError}</span>
+            </div>
+          )}
           <DialogFooter>
-            <Button variant="outline" className="rounded-full" onClick={() => setConfirmOpen(false)}>
+            <Button
+              variant="outline"
+              className="rounded-full"
+              disabled={loading}
+              onClick={() => setConfirmOpen(false)}
+            >
               Keep editing
             </Button>
-            <Button className="rounded-full bg-gradient-brand text-white" onClick={submit}>
-              Confirm &amp; submit
+            <Button
+              className="rounded-full bg-gradient-brand text-white"
+              disabled={loading}
+              onClick={submit}
+            >
+              {loading ? (
+                <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Sending…</>
+              ) : (
+                <>Confirm &amp; submit</>
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>
