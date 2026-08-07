@@ -278,7 +278,7 @@ function Landing() {
       <section className="px-4 py-16 sm:px-6">
         <div className="mx-auto max-w-3xl">
           <SectionHeading eyebrow="FAQ" title="Frequently asked questions" sub="" />
-          <Accordion type="single" collapsible className="mt-10">
+          <Accordion type="single" collapsible defaultValue={faqs[0].q} className="mt-10">
             {faqs.slice(0, 5).map((f) => (
               <AccordionItem key={f.q} value={f.q} className="border-border/60">
                 <AccordionTrigger className="text-left text-sm font-medium">{f.q}</AccordionTrigger>

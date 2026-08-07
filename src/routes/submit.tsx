@@ -3,6 +3,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { motion, AnimatePresence } from "motion/react";
 import { toast } from "sonner";
 import { CheckCircle2, Clock, Info, Loader2, Send, Sparkles } from "lucide-react";
+import { CATEGORIES } from "@/lib/mock-data";
 
 import { AuroraBackground } from "@/components/aurora-background";
 import { PageHeader } from "@/components/section-heading";
@@ -47,7 +48,9 @@ const MAX = 600;
 
 function SubmitPage() {
   const [name, setName] = useState("");
+  const [studentId, setStudentId] = useState("");
   const [contact, setContact] = useState("");
+  const [department, setDepartment] = useState("");
   const [message, setMessage] = useState("");
   const [touched, setTouched] = useState({ name: false, message: false });
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -77,7 +80,9 @@ function SubmitPage() {
   const reset = () => {
     setTicketId(null);
     setName("");
+    setStudentId("");
     setContact("");
+    setDepartment("");
     setMessage("");
     setTouched({ name: false, message: false });
   };
@@ -156,6 +161,20 @@ function SubmitPage() {
                     </div>
 
                     <div className="space-y-2">
+                      <Label htmlFor="student-id">
+                        Student ID{" "}
+                        <span className="text-xs font-normal text-muted-foreground">(optional)</span>
+                      </Label>
+                      <Input
+                        id="student-id"
+                        value={studentId}
+                        placeholder="e.g. 22CS001"
+                        onChange={(e) => setStudentId(e.target.value)}
+                        className="rounded-xl"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
                       <div className="flex items-center justify-between">
                         <Label htmlFor="message">
                           Message <span className="text-danger">*</span>
@@ -195,6 +214,24 @@ function SubmitPage() {
                         onChange={(e) => setContact(e.target.value)}
                         className="rounded-xl"
                       />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="department">
+                        Department{" "}
+                        <span className="text-xs font-normal text-muted-foreground">(optional — AI will infer if blank)</span>
+                      </Label>
+                      <select
+                        id="department"
+                        value={department}
+                        onChange={(e) => setDepartment(e.target.value)}
+                        className="flex h-10 w-full rounded-xl border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        <option value="">Let AI decide</option>
+                        {CATEGORIES.map((cat) => (
+                          <option key={cat} value={cat}>{cat}</option>
+                        ))}
+                      </select>
                     </div>
 
                     <div className="flex items-center gap-2 rounded-xl border border-border/60 bg-muted/50 px-4 py-3 text-sm text-muted-foreground">
@@ -289,9 +326,19 @@ function SubmitPage() {
             <p>
               <span className="text-muted-foreground">Sender:</span> {name}
             </p>
+            {studentId && (
+              <p>
+                <span className="text-muted-foreground">Student ID:</span> {studentId}
+              </p>
+            )}
             <p>
               <span className="text-muted-foreground">Contact:</span> {contact || "Not provided"}
             </p>
+            {department && (
+              <p>
+                <span className="text-muted-foreground">Department:</span> {department}
+              </p>
+            )}
             <p className="text-pretty">
               <span className="text-muted-foreground">Message:</span> {message}
             </p>

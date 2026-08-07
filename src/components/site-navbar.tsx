@@ -56,9 +56,7 @@ export function SiteNavbar() {
           >
             {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
           </Button>
-          <Button asChild className="hidden rounded-full bg-gradient-brand text-white shadow-elegant hover:opacity-95 sm:inline-flex">
-            <Link to="/submit">Get Started</Link>
-          </Button>
+
           <Button
             variant="ghost"
             size="icon"
@@ -93,11 +91,7 @@ export function SiteNavbar() {
                   {l.label}
                 </Link>
               ))}
-              <Button asChild className="mt-2 rounded-full bg-gradient-brand text-white">
-                <Link to="/submit" onClick={() => setOpen(false)}>
-                  Get Started
-                </Link>
-              </Button>
+
             </div>
           </motion.div>
         )}
