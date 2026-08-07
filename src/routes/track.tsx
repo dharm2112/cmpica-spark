@@ -12,7 +12,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { CategoryBadge, StatusBadge, UrgencyBadge } from "@/components/badges";
 import { TicketTimeline } from "@/components/ticket-timeline";
-import { tickets, type Ticket } from "@/lib/mock-data";
+import { type Ticket, type TimelineEvent } from "@/lib/mock-data";
+import { supabase, type TicketRow } from "@/lib/supabase";
 
 export const Route = createFileRoute("/track")({
   head: () => ({
@@ -33,24 +34,76 @@ export const Route = createFileRoute("/track")({
   component: TrackPage,
 });
 
+// ─── Map Supabase row → UI Ticket type ───────────────────────────────────────
+function rowToTicket(row: TicketRow): Ticket {
+  const status = (row.status ?? "Open") as Ticket["status"];
+  const category = (row.category ?? "Other") as Ticket["category"];
+
+  const timeline: TimelineEvent[] = [
+    { label: "Ticket submitted",       detail: "Received from student portal",      at: row.created_at, done: true },
+    { label: "AI analysis",            detail: "Message parsed and classified",      at: row.created_at, done: true },
+    { label: "Category & urgency",     detail: `Classified as ${category}`,          at: row.created_at, done: true },
+    { label: "Routed to department",   detail: `Assigned to ${row.department ?? "—"}`, at: row.created_at, done: status !== "Open" },
+    { label: status === "Escalated" ? "Escalated" : "In progress",
+      detail: status === "Escalated" ? "SLA breached — escalated to department head" : "Handled by assigned team",
+      at: row.created_at,
+      done: status === "In Progress" || status === "Escalated" || status === "Resolved" },
+    { label: "Resolved", detail: "Ticket closed", at: row.created_at, done: status === "Resolved" },
+  ];
+
+  return {
+    id: row.ticket_id,
+    sender: row.sender_name,
+    contact: row.contact_email ?? undefined,
+    message: row.message,
+    category,
+    urgency: (row.urgency ?? "Low") as Ticket["urgency"],
+    status,
+    department: row.department ?? "—",
+    escalated: row.escalated ?? status === "Escalated",
+    confidence: row.confidence ?? 0,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at ?? row.created_at,
+    timeline,
+  };
+}
+
+// ─── Component ────────────────────────────────────────────────────────────────
 function TrackPage() {
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<Ticket | null>(null);
   const [notFound, setNotFound] = useState(false);
+  const [fetchError, setFetchError] = useState<string | null>(null);
 
-  const search = (id: string) => {
+  const search = async (id: string) => {
     const q = id.trim().toUpperCase();
     if (!q) return;
+
     setLoading(true);
     setResult(null);
     setNotFound(false);
-    setTimeout(() => {
-      const found = tickets.find((t) => t.id.toUpperCase() === q);
-      setResult(found ?? null);
-      setNotFound(!found);
+    setFetchError(null);
+
+    try {
+      const { data, error } = await supabase
+        .from("tickets")
+        .select("*")
+        .ilike("ticket_id", q)
+        .maybeSingle();
+
+      if (error) throw new Error(error.message);
+
+      if (!data) {
+        setNotFound(true);
+      } else {
+        setResult(rowToTicket(data as TicketRow));
+      }
+    } catch (err) {
+      setFetchError(err instanceof Error ? err.message : "Network error — please try again.");
+    } finally {
       setLoading(false);
-    }, 900);
+    }
   };
 
   return (
@@ -60,7 +113,7 @@ function TrackPage() {
         <PageHeader
           eyebrow="Track ticket"
           title="Where is my ticket?"
-          sub="Enter the reference you received after submission — for example CMP-1042."
+          sub="Enter the reference you received after submission — for example TKT-WIXU53."
         />
 
         <form
@@ -75,7 +128,7 @@ function TrackPage() {
             <Input
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="CMP-1042"
+              placeholder="TKT-WIXU53"
               aria-label="Ticket ID"
               className="h-12 rounded-full pl-10 font-mono"
             />
@@ -83,28 +136,13 @@ function TrackPage() {
           <Button
             type="submit"
             size="lg"
+            disabled={loading}
             className="h-12 rounded-full bg-gradient-brand px-7 text-white shadow-elegant hover:opacity-95"
           >
             {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Search className="mr-2 h-4 w-4" />}
             Search
           </Button>
         </form>
-
-        <div className="mx-auto mt-4 flex max-w-xl flex-wrap justify-center gap-2">
-          <span className="text-xs text-muted-foreground">Try:</span>
-          {tickets.slice(0, 4).map((t) => (
-            <button
-              key={t.id}
-              onClick={() => {
-                setQuery(t.id);
-                search(t.id);
-              }}
-              className="rounded-full border border-border px-2.5 py-0.5 font-mono text-xs text-muted-foreground transition-colors hover:border-primary/40 hover:text-primary"
-            >
-              {t.id}
-            </button>
-          ))}
-        </div>
 
         <div className="mt-10">
           <AnimatePresence mode="wait">
@@ -126,7 +164,17 @@ function TrackPage() {
               </motion.div>
             )}
 
-            {notFound && !loading && (
+            {fetchError && !loading && (
+              <motion.div key="error" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
+                <Alert variant="destructive" className="rounded-2xl">
+                  <AlertTriangle className="h-4 w-4" />
+                  <AlertTitle>Something went wrong</AlertTitle>
+                  <AlertDescription>{fetchError}</AlertDescription>
+                </Alert>
+              </motion.div>
+            )}
+
+            {notFound && !loading && !fetchError && (
               <motion.div key="nf" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
                 <Alert variant="destructive" className="rounded-2xl">
                   <AlertTriangle className="h-4 w-4" />
@@ -160,15 +208,12 @@ function TrackPage() {
                       <UrgencyBadge value={result.urgency} />
                     </div>
                     <dl className="grid gap-3 text-sm">
-                      <Row label="Sender" value={result.sender} />
-                      <Row label="Contact" value={result.contact ?? "Not provided"} />
-                      <Row label="Department" value={result.department} />
-                      <Row label="Submitted" value={new Date(result.createdAt).toLocaleString()} />
+                      <Row label="Sender"       value={result.sender} />
+                      <Row label="Contact"      value={result.contact ?? "Not provided"} />
+                      <Row label="Department"   value={result.department} />
+                      <Row label="Submitted"    value={new Date(result.createdAt).toLocaleString()} />
                       <Row label="Last updated" value={new Date(result.updatedAt).toLocaleString()} />
-                      <Row
-                        label="Escalation"
-                        value={result.escalated ? "Escalated to department head" : "Not escalated"}
-                      />
+                      <Row label="Escalation"   value={result.escalated ? "Escalated to department head" : "Not escalated"} />
                     </dl>
                     {result.escalated && (
                       <Alert className="rounded-xl border-danger/30 bg-danger/10">
@@ -207,3 +252,4 @@ function Row({ label, value }: { label: string; value: string }) {
     </div>
   );
 }
+
