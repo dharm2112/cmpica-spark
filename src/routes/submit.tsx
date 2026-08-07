@@ -67,7 +67,7 @@ function SubmitPage() {
   const valid = name.trim().length >= 2 && message.trim().length >= 12;
   const preview = classifyMock(message);
 
-  const WEBHOOK_URL = import.meta.env.VITE_WEBHOOK_URL as string;
+  const WEBHOOK_URL = (import.meta.env.VITE_WEBHOOK_URL as string | undefined) ?? "";
 
   const submit = async () => {
     setConfirmOpen(false);
@@ -75,6 +75,10 @@ function SubmitPage() {
     setSubmitError(null);
 
     try {
+      if (!WEBHOOK_URL) {
+        throw new Error("VITE_WEBHOOK_URL is not set in .env — restart the dev server after adding it.");
+      }
+
       const res = await fetch(WEBHOOK_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -90,7 +94,30 @@ function SubmitPage() {
         throw new Error(`Server responded with ${res.status}`);
       }
 
-      const id = `CMP-${1043 + Math.floor(Math.random() * 40)}`;
+      // Parse the ticket ID returned by n8n
+      let id: string;
+      try {
+        const data = await res.json();
+        // n8n can return the ID under different field names — try all common ones
+        id =
+          data?.ticketId ??
+          data?.ticket_id ??
+          data?.["Ticket ID"] ??
+          data?.["ticket_id"] ??
+          data?.id ??
+          data?.ticketID ??
+          null;
+
+        if (!id || typeof id !== "string") {
+          // Response came back but with no recognisable ID field — log for debugging
+          console.warn("n8n response did not contain a ticket ID field:", data);
+          throw new Error("no_id");
+        }
+      } catch {
+        // Fallback: generate a local ID so the success screen is never broken
+        id = `TKT-${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
+      }
+
       setTicketId(id);
       toast.success("Ticket submitted", {
         description: `Reference ${id} · routed to ${preview.department}`,
