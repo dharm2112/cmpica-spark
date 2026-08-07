@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ContactRouteImport } from './routes/contact'
 import { Route as DashboardRouteImport } from './routes/dashboard'
+import { Route as DemoRouteImport } from './routes/demo'
 import { Route as FaqRouteImport } from './routes/faq'
 import { Route as SubmitRouteImport } from './routes/submit'
 import { Route as TrackRouteImport } from './routes/track'
@@ -29,6 +30,11 @@ const ContactRoute = ContactRouteImport.update({
 const DashboardRoute = DashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DemoRoute = DemoRouteImport.update({
+  id: '/demo',
+  path: '/demo',
   getParentRoute: () => rootRouteImport,
 } as any)
 const FaqRoute = FaqRouteImport.update({
@@ -51,6 +57,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/contact': typeof ContactRoute
   '/dashboard': typeof DashboardRoute
+  '/demo': typeof DemoRoute
   '/faq': typeof FaqRoute
   '/submit': typeof SubmitRoute
   '/track': typeof TrackRoute
@@ -59,6 +66,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/contact': typeof ContactRoute
   '/dashboard': typeof DashboardRoute
+  '/demo': typeof DemoRoute
   '/faq': typeof FaqRoute
   '/submit': typeof SubmitRoute
   '/track': typeof TrackRoute
@@ -68,23 +76,33 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/contact': typeof ContactRoute
   '/dashboard': typeof DashboardRoute
+  '/demo': typeof DemoRoute
   '/faq': typeof FaqRoute
   '/submit': typeof SubmitRoute
   '/track': typeof TrackRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/contact' | '/dashboard' | '/faq' | '/submit' | '/track'
+  fullPaths:
+    '/' | '/contact' | '/dashboard' | '/demo' | '/faq' | '/submit' | '/track'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/contact' | '/dashboard' | '/faq' | '/submit' | '/track'
+  to: '/' | '/contact' | '/dashboard' | '/demo' | '/faq' | '/submit' | '/track'
   id:
-    '__root__' | '/' | '/contact' | '/dashboard' | '/faq' | '/submit' | '/track'
+    | '__root__'
+    | '/'
+    | '/contact'
+    | '/dashboard'
+    | '/demo'
+    | '/faq'
+    | '/submit'
+    | '/track'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   ContactRoute: typeof ContactRoute
   DashboardRoute: typeof DashboardRoute
+  DemoRoute: typeof DemoRoute
   FaqRoute: typeof FaqRoute
   SubmitRoute: typeof SubmitRoute
   TrackRoute: typeof TrackRoute
@@ -111,6 +129,13 @@ declare module '@tanstack/react-router' {
       path: '/dashboard'
       fullPath: '/dashboard'
       preLoaderRoute: typeof DashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/demo': {
+      id: '/demo'
+      path: '/demo'
+      fullPath: '/demo'
+      preLoaderRoute: typeof DemoRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/faq': {
@@ -141,6 +166,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ContactRoute: ContactRoute,
   DashboardRoute: DashboardRoute,
+  DemoRoute: DemoRoute,
   FaqRoute: FaqRoute,
   SubmitRoute: SubmitRoute,
   TrackRoute: TrackRoute,

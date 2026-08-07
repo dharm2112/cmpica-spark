@@ -78,7 +78,7 @@ type Feed = {
 };
 
 function DemoPage() {
-  const [message, setMessage] = useState(samples[0]);
+  const [message, setMessage] = useState<string>(samples[0] ?? "");
   const [stage, setStage] = useState(-1);
   const [running, setRunning] = useState(false);
   const [feed, setFeed] = useState<Feed[]>(
