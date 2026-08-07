@@ -15,9 +15,9 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 export type TicketRow = {
   id: number;
   ticket_id: string;        // e.g. TKT-WIXU53
-  sender_name: string;
+  sender: string;
   message: string;
-  contact_email: string | null;
+  contact: string | null;
   status: string;           // Open | In Progress | Escalated | Resolved
   category: string;         // Academic | Technical | Administrative | Facilities | Other
   urgency: string;          // Low | Medium | High

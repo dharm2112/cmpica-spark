@@ -53,8 +53,8 @@ function rowToTicket(row: TicketRow): Ticket {
 
   return {
     id: row.ticket_id,
-    sender: row.sender_name,
-    contact: row.contact_email ?? undefined,
+    sender: row.sender,
+    contact: row.contact ?? undefined,
     message: row.message,
     category,
     urgency: (row.urgency ?? "Low") as Ticket["urgency"],
