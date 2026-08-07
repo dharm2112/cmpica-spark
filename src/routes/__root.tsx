@@ -8,7 +8,7 @@ import {
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
-import { AnimatePresence, motion } from "motion/react";
+import { motion } from "motion/react";
 import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
@@ -140,17 +140,15 @@ function RootComponent() {
         <div className="flex min-h-screen flex-col">
           <SiteNavbar />
           <main className="flex-1">
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={pathname}
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.25, ease: "easeOut" }}
-              >
-                {/* Required: nested routes render here. */}
-                <Outlet />
-              </motion.div>
-            </AnimatePresence>
+            <motion.div
+              key={pathname}
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.25, ease: "easeOut" }}
+            >
+              {/* Required: nested routes render here. */}
+              <Outlet />
+            </motion.div>
           </main>
           <SiteFooter />
         </div>
