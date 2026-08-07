@@ -141,14 +141,14 @@ function SubmitPage() {
   return (
     <div className="relative overflow-hidden px-4 py-16 sm:px-6">
       <AuroraBackground />
-      <div className="relative mx-auto max-w-5xl">
+      <div className="relative mx-auto max-w-2xl">
         <PageHeader
           eyebrow="Submit ticket"
           title="Tell us what went wrong"
           sub="One message is enough. The AI figures out the category, urgency and the department that owns it."
         />
 
-        <div className="mt-12 grid gap-6 lg:grid-cols-[1.4fr_1fr]">
+        <div className="mt-12">
           <Card className="rounded-2xl border-border/60 shadow-soft">
             <CardHeader>
               <CardTitle className="text-base">Ticket details</CardTitle>
@@ -284,56 +284,6 @@ function SubmitPage() {
               </AnimatePresence>
             </CardContent>
           </Card>
-
-          <div className="space-y-4">
-            <Card className="rounded-2xl border-border/60 shadow-soft">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-base">
-                  <Sparkles className="h-4 w-4 text-primary" /> Live AI preview
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {message.trim().length < 6 ? (
-                  <p className="text-sm text-muted-foreground">
-                    Start typing your message to see how the classifier reads it.
-                  </p>
-                ) : (
-                  <>
-                    <div className="flex flex-wrap gap-2">
-                      <CategoryBadge value={preview.category} />
-                      <UrgencyBadge value={preview.urgency} />
-                    </div>
-                    <div>
-                      <div className="flex items-center justify-between text-xs text-muted-foreground">
-                        <span>Confidence</span>
-                        <span className="tabular-nums">{Math.round(preview.confidence * 100)}%</span>
-                      </div>
-                      <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-muted">
-                        <motion.div
-                          className="h-full rounded-full bg-gradient-brand"
-                          animate={{ width: `${preview.confidence * 100}%` }}
-                          transition={{ duration: 0.4 }}
-                        />
-                      </div>
-                    </div>
-                    <p className="text-sm text-muted-foreground">
-                      Suggested route:{" "}
-                      <span className="text-foreground">{preview.department}</span>
-                    </p>
-                  </>
-                )}
-              </CardContent>
-            </Card>
-
-            <Alert className="rounded-2xl border-border/60">
-              <Info className="h-4 w-4" />
-              <AlertTitle>Three fields only</AlertTitle>
-              <AlertDescription className="text-muted-foreground">
-                Sender name and message are required. Contact email is optional.
-                Category, urgency and department are inferred by the AI.
-              </AlertDescription>
-            </Alert>
-          </div>
         </div>
       </div>
 
